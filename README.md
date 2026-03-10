@@ -220,221 +220,231 @@ sudo bash          # Linux 需要 root
 
 輸出 CSV 共 **85 欄**，前 84 欄為特徵，最後 1 欄為標籤。
 
+**資料型態說明：**
+
+| 型態 | 說明 |
+|------|------|
+| `String` | 字串，輸出為文字（如 IP 位址、識別碼、日期時間） |
+| `int` | 32 位元整數（Java `int`） |
+| `long` | 64 位元整數（Java `long`） |
+| `double` | 64 位元浮點數（Java `double`），用於統計量、速率、平均值等 |
+| `String（類別）` | 分類標籤字串 |
+
 ### 流身份識別特徵（欄 1–7）
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 1 | Flow ID | FID | `src_ip-dst_ip-src_port-dst_port-protocol`（正規化後的 5-tuple 字串） |
-| 2 | Src IP | SIP | IPv4 `source()` 或 IPv6 `source()`（`Ip4` / `Ip6` 標頭） |
-| 3 | Src Port | SPT | TCP `source()` 或 UDP `source()`（`Tcp` / `Udp` 標頭） |
-| 4 | Dst IP | DIP | IPv4 `destination()` 或 IPv6 `destination()`（`Ip4` / `Ip6` 標頭） |
-| 5 | Dst Port | DPT | TCP `destination()` 或 UDP `destination()`（`Tcp` / `Udp` 標頭） |
-| 6 | Protocol | PROT | IP 協定號碼（TCP = 6，UDP = 17） |
-| 7 | Timestamp | TSTP | 流第一個封包的 `PcapHeader.timestampInMicros()` 轉換為日期時間字串 |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 1 | Flow ID | FID | `String` | `src_ip-dst_ip-src_port-dst_port-protocol`（正規化後的 5-tuple 字串） |
+| 2 | Src IP | SIP | `String` | IPv4 `source()` 或 IPv6 `source()`（`Ip4` / `Ip6` 標頭） |
+| 3 | Src Port | SPT | `int` | TCP `source()` 或 UDP `source()`（`Tcp` / `Udp` 標頭） |
+| 4 | Dst IP | DIP | `String` | IPv4 `destination()` 或 IPv6 `destination()`（`Ip4` / `Ip6` 標頭） |
+| 5 | Dst Port | DPT | `int` | TCP `destination()` 或 UDP `destination()`（`Tcp` / `Udp` 標頭） |
+| 6 | Protocol | PROT | `int` | IP 協定號碼（TCP = 6，UDP = 17） |
+| 7 | Timestamp | TSTP | `String` | 流第一個封包的 `PcapHeader.timestampInMicros()` 轉換為日期時間字串 |
 
 ### 流時間特徵（欄 8）
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 8 | Flow Duration | DUR | `flowLastSeen − flowStartTime`（單位：微秒，使用封包時間戳記） |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 8 | Flow Duration | DUR | `long` | `flowLastSeen − flowStartTime`（單位：微秒，使用封包時間戳記） |
 
 ### 封包數量特徵（欄 9–10）
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 9 | Total Fwd Packet | TFwP | 正向封包數量（`src == flow.src` 的封包數） |
-| 10 | Total Bwd packets | TBwP | 反向封包數量（`src != flow.src` 的封包數） |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 9 | Total Fwd Packet | TFwP | `long` | 正向封包數量（`src == flow.src` 的封包數） |
+| 10 | Total Bwd packets | TBwP | `long` | 反向封包數量（`src != flow.src` 的封包數） |
 
 ### 位元組總量特徵（欄 11–12）
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 11 | Total Length of Fwd Packet | TLFwP | 所有正向封包的 `tcp.getPayloadLength()` 或 `udp.getPayloadLength()` 累加 |
-| 12 | Total Length of Bwd Packet | TLBwP | 所有反向封包的 Payload 長度累加 |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 11 | Total Length of Fwd Packet | TLFwP | `double` | 所有正向封包的 `tcp.getPayloadLength()` 或 `udp.getPayloadLength()` 累加 |
+| 12 | Total Length of Bwd Packet | TLBwP | `double` | 所有反向封包的 Payload 長度累加 |
 
 ### 正向封包長度統計特徵（欄 13–16）
 
 以 `SummaryStatistics`（Apache Commons Math）對正向封包 Payload 位元組計算：
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 13 | Fwd Packet Length Max | FwPLMA | `fwdPktStats.getMax()`（正向 Payload 最大值） |
-| 14 | Fwd Packet Length Min | FwPLMI | `fwdPktStats.getMin()`（正向 Payload 最小值） |
-| 15 | Fwd Packet Length Mean | FwPLAG | `fwdPktStats.getMean()`（正向 Payload 平均值） |
-| 16 | Fwd Packet Length Std | FwPLSD | `fwdPktStats.getStandardDeviation()`（正向 Payload 標準差） |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 13 | Fwd Packet Length Max | FwPLMA | `double` | `fwdPktStats.getMax()`（正向 Payload 最大值） |
+| 14 | Fwd Packet Length Min | FwPLMI | `double` | `fwdPktStats.getMin()`（正向 Payload 最小值） |
+| 15 | Fwd Packet Length Mean | FwPLAG | `double` | `fwdPktStats.getMean()`（正向 Payload 平均值） |
+| 16 | Fwd Packet Length Std | FwPLSD | `double` | `fwdPktStats.getStandardDeviation()`（正向 Payload 標準差） |
 
 ### 反向封包長度統計特徵（欄 17–20）
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 17 | Bwd Packet Length Max | BwPLMA | `bwdPktStats.getMax()`（反向 Payload 最大值） |
-| 18 | Bwd Packet Length Min | BwPLMI | `bwdPktStats.getMin()`（反向 Payload 最小值） |
-| 19 | Bwd Packet Length Mean | BwPLAG | `bwdPktStats.getMean()`（反向 Payload 平均值） |
-| 20 | Bwd Packet Length Std | BwPLSD | `bwdPktStats.getStandardDeviation()`（反向 Payload 標準差） |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 17 | Bwd Packet Length Max | BwPLMA | `double` | `bwdPktStats.getMax()`（反向 Payload 最大值） |
+| 18 | Bwd Packet Length Min | BwPLMI | `double` | `bwdPktStats.getMin()`（反向 Payload 最小值） |
+| 19 | Bwd Packet Length Mean | BwPLAG | `double` | `bwdPktStats.getMean()`（反向 Payload 平均值） |
+| 20 | Bwd Packet Length Std | BwPLSD | `double` | `bwdPktStats.getStandardDeviation()`（反向 Payload 標準差） |
 
 ### 流速率特徵（欄 21–22）
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 21 | Flow Bytes/s | FB/s | `(forwardBytes + backwardBytes) / (flowDuration / 1,000,000)` |
-| 22 | Flow Packets/s | FP/s | `totalPacketCount / (flowDuration / 1,000,000)` |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 21 | Flow Bytes/s | FB/s | `double` | `(forwardBytes + backwardBytes) / (flowDuration / 1,000,000)` |
+| 22 | Flow Packets/s | FP/s | `double` | `totalPacketCount / (flowDuration / 1,000,000)` |
 
 ### 流 IAT（Inter-Arrival Time）特徵（欄 23–26）
 
 IAT = 同一流中相鄰兩個封包的時間戳記差值（微秒）：
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 23 | Flow IAT Mean | FLIATAG | `flowIAT.getMean()`（所有封包間隔的平均值） |
-| 24 | Flow IAT Std | FLIATSD | `flowIAT.getStandardDeviation()`（標準差） |
-| 25 | Flow IAT Max | FLIATMA | `flowIAT.getMax()`（最大封包間隔） |
-| 26 | Flow IAT Min | FLIATMI | `flowIAT.getMin()`（最小封包間隔） |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 23 | Flow IAT Mean | FLIATAG | `double` | `flowIAT.getMean()`（所有封包間隔的平均值） |
+| 24 | Flow IAT Std | FLIATSD | `double` | `flowIAT.getStandardDeviation()`（標準差） |
+| 25 | Flow IAT Max | FLIATMA | `double` | `flowIAT.getMax()`（最大封包間隔） |
+| 26 | Flow IAT Min | FLIATMI | `double` | `flowIAT.getMin()`（最小封包間隔） |
 
 ### 正向 IAT 特徵（欄 27–31）
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 27 | Fwd IAT Total | FwIATTO | `forwardIAT.getSum()`（正向封包間隔總和） |
-| 28 | Fwd IAT Mean | FwIATAG | `forwardIAT.getMean()` |
-| 29 | Fwd IAT Std | FwIATSD | `forwardIAT.getStandardDeviation()` |
-| 30 | Fwd IAT Max | FwIATMA | `forwardIAT.getMax()` |
-| 31 | Fwd IAT Min | FwIATMI | `forwardIAT.getMin()` |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 27 | Fwd IAT Total | FwIATTO | `double` | `forwardIAT.getSum()`（正向封包間隔總和） |
+| 28 | Fwd IAT Mean | FwIATAG | `double` | `forwardIAT.getMean()` |
+| 29 | Fwd IAT Std | FwIATSD | `double` | `forwardIAT.getStandardDeviation()` |
+| 30 | Fwd IAT Max | FwIATMA | `double` | `forwardIAT.getMax()` |
+| 31 | Fwd IAT Min | FwIATMI | `double` | `forwardIAT.getMin()` |
 
 ### 反向 IAT 特徵（欄 32–36）
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 32 | Bwd IAT Total | BwIATTO | `backwardIAT.getSum()`（反向封包間隔總和） |
-| 33 | Bwd IAT Mean | BwIATAG | `backwardIAT.getMean()` |
-| 34 | Bwd IAT Std | BwIATSD | `backwardIAT.getStandardDeviation()` |
-| 35 | Bwd IAT Max | BwIATMA | `backwardIAT.getMax()` |
-| 36 | Bwd IAT Min | BwIATMI | `backwardIAT.getMin()` |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 32 | Bwd IAT Total | BwIATTO | `double` | `backwardIAT.getSum()`（反向封包間隔總和） |
+| 33 | Bwd IAT Mean | BwIATAG | `double` | `backwardIAT.getMean()` |
+| 34 | Bwd IAT Std | BwIATSD | `double` | `backwardIAT.getStandardDeviation()` |
+| 35 | Bwd IAT Max | BwIATMA | `double` | `backwardIAT.getMax()` |
+| 36 | Bwd IAT Min | BwIATMI | `double` | `backwardIAT.getMin()` |
 
 ### 方向性 TCP 旗標計數特徵（欄 37–40）
 
 > UDP 封包此類特徵恆為 0
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 37 | Fwd PSH Flags | FwPSH | 正向封包中 `tcp.flags_PSH() == true` 的封包數量 |
-| 38 | Bwd PSH Flags | BwPSH | 反向封包中 `tcp.flags_PSH() == true` 的封包數量 |
-| 39 | Fwd URG Flags | FwURG | 正向封包中 `tcp.flags_URG() == true` 的封包數量 |
-| 40 | Bwd URG Flags | BwURG | 反向封包中 `tcp.flags_URG() == true` 的封包數量 |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 37 | Fwd PSH Flags | FwPSH | `int` | 正向封包中 `tcp.flags_PSH() == true` 的封包數量 |
+| 38 | Bwd PSH Flags | BwPSH | `int` | 反向封包中 `tcp.flags_PSH() == true` 的封包數量 |
+| 39 | Fwd URG Flags | FwURG | `int` | 正向封包中 `tcp.flags_URG() == true` 的封包數量 |
+| 40 | Bwd URG Flags | BwURG | `int` | 反向封包中 `tcp.flags_URG() == true` 的封包數量 |
 
 ### 標頭長度特徵（欄 41–42）
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 41 | Fwd Header Length | FwHL | 所有正向封包的 `tcp.getHeaderLength()` 或 `udp.getHeaderLength()` 累加（位元組） |
-| 42 | Bwd Header Length | BwHL | 所有反向封包的標頭長度累加（位元組） |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 41 | Fwd Header Length | FwHL | `long` | 所有正向封包的 `tcp.getHeaderLength()` 或 `udp.getHeaderLength()` 累加（位元組） |
+| 42 | Bwd Header Length | BwHL | `long` | 所有反向封包的標頭長度累加（位元組） |
 
 ### 每秒封包數特徵（欄 43–44）
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 43 | Fwd Packets/s | FwP/s | `forward.size() / (flowDuration / 1,000,000)` |
-| 44 | Bwd Packets/s | Bwp/s | `backward.size() / (flowDuration / 1,000,000)` |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 43 | Fwd Packets/s | FwP/s | `double` | `forward.size() / (flowDuration / 1,000,000)` |
+| 44 | Bwd Packets/s | Bwp/s | `double` | `backward.size() / (flowDuration / 1,000,000)` |
 
 ### 全流封包長度統計特徵（欄 45–49）
 
 以 `flowLengthStats` 對所有封包（正向 + 反向）的 Payload 位元組計算：
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 45 | Packet Length Min | PLMI | `flowLengthStats.getMin()` |
-| 46 | Packet Length Max | PLMA | `flowLengthStats.getMax()` |
-| 47 | Packet Length Mean | PLAG | `flowLengthStats.getMean()` |
-| 48 | Packet Length Std | PLSD | `flowLengthStats.getStandardDeviation()` |
-| 49 | Packet Length Variance | PLVA | `flowLengthStats.getVariance()` |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 45 | Packet Length Min | PLMI | `double` | `flowLengthStats.getMin()` |
+| 46 | Packet Length Max | PLMA | `double` | `flowLengthStats.getMax()` |
+| 47 | Packet Length Mean | PLAG | `double` | `flowLengthStats.getMean()` |
+| 48 | Packet Length Std | PLSD | `double` | `flowLengthStats.getStandardDeviation()` |
+| 49 | Packet Length Variance | PLVA | `double` | `flowLengthStats.getVariance()` |
 
 ### TCP 旗標總計數特徵（欄 50–57）
 
 對整條流（正向 + 反向）中各 TCP 旗標出現次數計算：
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 50 | FIN Flag Count | FINCT | `tcp.flags_FIN() == true` 的封包總數 |
-| 51 | SYN Flag Count | SYNCT | `tcp.flags_SYN() == true` 的封包總數 |
-| 52 | RST Flag Count | RSTCT | `tcp.flags_RST() == true` 的封包總數 |
-| 53 | PSH Flag Count | PSHCT | `tcp.flags_PSH() == true` 的封包總數 |
-| 54 | ACK Flag Count | ACKCT | `tcp.flags_ACK() == true` 的封包總數 |
-| 55 | URG Flag Count | URGCT | `tcp.flags_URG() == true` 的封包總數 |
-| 56 | CWR Flag Count | CWRCT | `tcp.flags_CWR() == true` 的封包總數 |
-| 57 | ECE Flag Count | ECECT | `tcp.flags_ECE() == true` 的封包總數 |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 50 | FIN Flag Count | FINCT | `int` | `tcp.flags_FIN() == true` 的封包總數 |
+| 51 | SYN Flag Count | SYNCT | `int` | `tcp.flags_SYN() == true` 的封包總數 |
+| 52 | RST Flag Count | RSTCT | `int` | `tcp.flags_RST() == true` 的封包總數 |
+| 53 | PSH Flag Count | PSHCT | `int` | `tcp.flags_PSH() == true` 的封包總數 |
+| 54 | ACK Flag Count | ACKCT | `int` | `tcp.flags_ACK() == true` 的封包總數 |
+| 55 | URG Flag Count | URGCT | `int` | `tcp.flags_URG() == true` 的封包總數 |
+| 56 | CWR Flag Count | CWRCT | `int` | `tcp.flags_CWR() == true` 的封包總數 |
+| 57 | ECE Flag Count | ECECT | `int` | `tcp.flags_ECE() == true` 的封包總數 |
 
 ### 比率與平均大小特徵（欄 58–61）
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 58 | Down/Up Ratio | D/URO | `backward.size() / forward.size()`（反向封包數 ÷ 正向封包數） |
-| 59 | Average Packet Size | PSAG | `flowLengthStats.getSum() / totalPacketCount`（所有封包 Payload 總和 ÷ 封包總數） |
-| 60 | Fwd Segment Size Avg | FwSgAG | `fwdPktStats.getSum() / forward.size()`（正向 Payload 總和 ÷ 正向封包數） |
-| 61 | Bwd Segment Size Avg | BwSgAG | `bwdPktStats.getSum() / backward.size()`（反向 Payload 總和 ÷ 反向封包數） |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 58 | Down/Up Ratio | D/URO | `double` | `backward.size() / forward.size()`（反向封包數 ÷ 正向封包數） |
+| 59 | Average Packet Size | PSAG | `double` | `flowLengthStats.getSum() / totalPacketCount`（所有封包 Payload 總和 ÷ 封包總數） |
+| 60 | Fwd Segment Size Avg | FwSgAG | `double` | `fwdPktStats.getSum() / forward.size()`（正向 Payload 總和 ÷ 正向封包數） |
+| 61 | Bwd Segment Size Avg | BwSgAG | `double` | `bwdPktStats.getSum() / backward.size()`（反向 Payload 總和 ÷ 反向封包數） |
 
 > **注意：** 原始程式碼中欄位 62 原為 `Fwd Header Length` 的重複欄位（與欄位 41 相同），已在 `FlowFeature.java` 中刪除，因此輸出 CSV 中不存在欄位 62，後續欄號維持原始程式碼中的編號（63 起）。
 
-| 62 | *(已移除)* | *(N/A)* | 原為 Fwd Header Length 的重複值，與欄位 41 相同，已刪除 |
+| 62 | *(已移除)* | *(N/A)* | *(N/A)* | 原為 Fwd Header Length 的重複值，與欄位 41 相同，已刪除 |
 
 ### 批量傳輸（Bulk）特徵（欄 63–68）
 
 Bulk 定義：同方向連續 ≥ 4 個 Payload > 0 的封包，且相鄰封包間隔 < 1 秒（1,000,000 µs）則視為一次 Bulk：
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 63 | Fwd Bytes/Bulk Avg | FwB/BAG | `fbulkSizeTotal / fbulkStateCount`（正向每次 Bulk 的平均位元組數） |
-| 64 | Fwd Packet/Bulk Avg | FwP/BAG | `fbulkPacketCount / fbulkStateCount`（正向每次 Bulk 的平均封包數） |
-| 65 | Fwd Bulk Rate Avg | FwBRAG | `fbulkSizeTotal / fbulkDuration(秒)`（正向 Bulk 平均傳輸速率 bytes/s） |
-| 66 | Bwd Bytes/Bulk Avg | BwB/BAG | `bbulkSizeTotal / bbulkStateCount`（反向每次 Bulk 的平均位元組數） |
-| 67 | Bwd Packet/Bulk Avg | BwP/BAG | `bbulkPacketCount / bbulkStateCount`（反向每次 Bulk 的平均封包數） |
-| 68 | Bwd Bulk Rate Avg | BwBRAG | `bbulkSizeTotal / bbulkDuration(秒)`（反向 Bulk 平均傳輸速率 bytes/s） |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 63 | Fwd Bytes/Bulk Avg | FwB/BAG | `long` | `fbulkSizeTotal / fbulkStateCount`（正向每次 Bulk 的平均位元組數） |
+| 64 | Fwd Packet/Bulk Avg | FwP/BAG | `long` | `fbulkPacketCount / fbulkStateCount`（正向每次 Bulk 的平均封包數） |
+| 65 | Fwd Bulk Rate Avg | FwBRAG | `long` | `fbulkSizeTotal / fbulkDuration(秒)`（正向 Bulk 平均傳輸速率 bytes/s） |
+| 66 | Bwd Bytes/Bulk Avg | BwB/BAG | `long` | `bbulkSizeTotal / bbulkStateCount`（反向每次 Bulk 的平均位元組數） |
+| 67 | Bwd Packet/Bulk Avg | BwP/BAG | `long` | `bbulkPacketCount / bbulkStateCount`（反向每次 Bulk 的平均封包數） |
+| 68 | Bwd Bulk Rate Avg | BwBRAG | `long` | `bbulkSizeTotal / bbulkDuration(秒)`（反向 Bulk 平均傳輸速率 bytes/s） |
 
 ### 子流（Subflow）特徵（欄 69–72）
 
 Subflow 定義：流中相鄰封包間隔 > 1 秒時，計為一個新的子流（`sfCount++`）：
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 69 | Subflow Fwd Packets | SFFwP | `forward.size() / sfCount`（每個子流的平均正向封包數） |
-| 70 | Subflow Fwd Bytes | SFFwB | `forwardBytes / sfCount`（每個子流的平均正向位元組數） |
-| 71 | Subflow Bwd Packets | SFBwP | `backward.size() / sfCount`（每個子流的平均反向封包數） |
-| 72 | Subflow Bwd Bytes | SFBwB | `backwardBytes / sfCount`（每個子流的平均反向位元組數） |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 69 | Subflow Fwd Packets | SFFwP | `long` | `forward.size() / sfCount`（每個子流的平均正向封包數） |
+| 70 | Subflow Fwd Bytes | SFFwB | `long` | `forwardBytes / sfCount`（每個子流的平均正向位元組數） |
+| 71 | Subflow Bwd Packets | SFBwP | `long` | `backward.size() / sfCount`（每個子流的平均反向封包數） |
+| 72 | Subflow Bwd Bytes | SFBwB | `long` | `backwardBytes / sfCount`（每個子流的平均反向位元組數） |
 
 ### TCP 視窗與資料封包特徵（欄 73–76）
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 73 | FWD Init Win Bytes | FwWB | 正向第一個封包的 `tcp.window()`（TCP 標頭中的接收視窗大小，位元組） |
-| 74 | Bwd Init Win Bytes | BwWB | 反向第一個封包的 `tcp.window()`（TCP 標頭中的接收視窗大小，位元組） |
-| 75 | Fwd Act Data Pkts | FwAP | 正向封包中 `payloadBytes >= 1` 的封包數量（含有 TCP Payload 的封包數） |
-| 76 | Fwd Seg Size Min | FwSgMI | 正向封包中 `headerBytes` 的最小值（`tcp.getHeaderLength()` 最小值） |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 73 | FWD Init Win Bytes | FwWB | `int` | 正向第一個封包的 `tcp.window()`（TCP 標頭中的接收視窗大小，位元組） |
+| 74 | Bwd Init Win Bytes | BwWB | `int` | 反向第一個封包的 `tcp.window()`（TCP 標頭中的接收視窗大小，位元組） |
+| 75 | Fwd Act Data Pkts | FwAP | `long` | 正向封包中 `payloadBytes >= 1` 的封包數量（含有 TCP Payload 的封包數） |
+| 76 | Fwd Seg Size Min | FwSgMI | `long` | 正向封包中 `headerBytes` 的最小值（`tcp.getHeaderLength()` 最小值） |
 
 ### 活躍時段（Active）統計特徵（欄 77–80）
 
 Active 時段：流持續有封包傳輸的連續時間段（前後封包間隔 < `activityTimeout`）：
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 77 | Active Mean | AcAG | `flowActive.getMean()`（各活躍時段持續時間的平均值，微秒） |
-| 78 | Active Std | AcSD | `flowActive.getStandardDeviation()`（標準差） |
-| 79 | Active Max | AcMA | `flowActive.getMax()`（最長活躍時段） |
-| 80 | Active Min | AcMI | `flowActive.getMin()`（最短活躍時段） |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 77 | Active Mean | AcAG | `double` | `flowActive.getMean()`（各活躍時段持續時間的平均值，微秒） |
+| 78 | Active Std | AcSD | `double` | `flowActive.getStandardDeviation()`（標準差） |
+| 79 | Active Max | AcMA | `double` | `flowActive.getMax()`（最長活躍時段） |
+| 80 | Active Min | AcMI | `double` | `flowActive.getMin()`（最短活躍時段） |
 
 ### 閒置時段（Idle）統計特徵（欄 81–84）
 
 Idle 時段：流中相鄰封包間隔超過 `activityTimeout`（預設 5 秒）的時間段：
 
-| # | 特徵名稱 | 縮寫 | PCAP 原始來源 / 計算方式 |
-|---|---------|------|--------------------------|
-| 81 | Idle Mean | IlAG | `flowIdle.getMean()`（各閒置時段持續時間的平均值，微秒） |
-| 82 | Idle Std | IlSD | `flowIdle.getStandardDeviation()`（標準差） |
-| 83 | Idle Max | IlMA | `flowIdle.getMax()`（最長閒置時段） |
-| 84 | Idle Min | IlMI | `flowIdle.getMin()`（最短閒置時段） |
+| # | 特徵名稱 | 縮寫 | 資料型態 | PCAP 原始來源 / 計算方式 |
+|---|---------|------|---------|--------------------------|
+| 81 | Idle Mean | IlAG | `double` | `flowIdle.getMean()`（各閒置時段持續時間的平均值，微秒） |
+| 82 | Idle Std | IlSD | `double` | `flowIdle.getStandardDeviation()`（標準差） |
+| 83 | Idle Max | IlMA | `double` | `flowIdle.getMax()`（最長閒置時段） |
+| 84 | Idle Min | IlMI | `double` | `flowIdle.getMin()`（最短閒置時段） |
 
 ### 標籤（欄 85）
 
-| # | 特徵名稱 | 縮寫 | 說明 |
-|---|---------|------|------|
-| 85 | Label | LBL | 流的分類標籤，預設為 `NeedManualLabel`，需手動標記 |
+| # | 特徵名稱 | 縮寫 | 資料型態 | 說明 |
+|---|---------|------|---------|------|
+| 85 | Label | LBL | `String（類別）` | 流的分類標籤，預設為 `NeedManualLabel`，需手動標記 |
 
 ---
 
